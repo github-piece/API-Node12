@@ -56,6 +56,7 @@ router.post('/setArticle', araticle.array('file'), ArticleController.setArticle)
 router.post('/updateArticle', araticle.array('file'), ArticleController.updateArticle);
 
 router.post('/getBuyHistory', BuySellController.getBuyHistory);
+router.post('/setBuyHistory', data.array(), BuySellController.setBuyHistory);
 router.post('/getSellHistory', BuySellController.getSellHistory);
 
 router.post('/getMessage', MessageController.getMessage);

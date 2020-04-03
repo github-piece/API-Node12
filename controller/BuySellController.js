@@ -43,3 +43,12 @@ exports.getSellHistory = async function(req, res) {
         res.status(400).send()
     }
 }
+
+exports.setBuyHistory = async function(req, res) {
+    try {
+        await mysql.execute("INSERT `tbl_history` (u_id, business_id, amount, fundtype, rate, frequency) VALUES (?, ?, ?, ?, ?, ?)", [req.body.userId, req.body.businessId, req.body.amount, req.body.fund, req.body.rate, req.body.frequency])
+        res.status(200).send()
+    } catch {
+        res.status(400).send()
+    }
+}
