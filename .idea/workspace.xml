@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="c5fb0745-b77d-4ab5-aa22-2def4c8a80a7" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/../mse/newsfeed.php" beforeDir="false" afterPath="$PROJECT_DIR$/../mse/newsfeed.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/connection.js" beforeDir="false" afterPath="$PROJECT_DIR$/connection.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/controller/CatalogueController.js" beforeDir="false" afterPath="$PROJECT_DIR$/controller/CatalogueController.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/controller/DashboardController.js" beforeDir="false" afterPath="$PROJECT_DIR$/controller/DashboardController.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/getData.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/router/routes.js" beforeDir="false" afterPath="$PROJECT_DIR$/router/routes.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server.js" beforeDir="false" afterPath="$PROJECT_DIR$/server.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/../package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/app-routing.module.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../src/app/app-routing.module.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/app.module.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../src/app/app.module.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/app.server.module.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/core/core.module.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../src/app/core/core.module.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/core/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../src/app/core/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/core/top-navbar/content/top-navbar-content.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/../src/app/core/top-navbar/content/content.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/core/top-navbar/content/top-navbar-content.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../src/app/core/top-navbar/content/content.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/front/auth/login.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/../src/app/front/auth/login.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/pages/dashboard/dashboard.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/pages/dashboard/dashboard.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/pages/dashboard/dashboard.module.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/pages/dashboard/dashboard.resolver.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/pages/dashboard/index.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/pages/dashboard/styles/dashboard.scss" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/pages/listing-abusiness/listing-abusiness.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/../src/app/pages/listing-abusiness/listing-abusiness.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/tables/index.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/tables/pages/extended/extended-tables.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/tables/pages/extended/extended-tables.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/tables/pages/extended/styles/_extended-tables.scss" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/tables/pages/regular/regular-tables.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/tables/pages/regular/regular-tables.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/tables/pages/regular/styles/_regular-tables.scss" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/tables/pages/smart/smart-tables.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/tables/pages/smart/smart-tables.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/tables/pages/smart/styles/smart-tables.scss" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/tables/resolvers/tables.resolver.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/tables/services/table-data.service.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/app/tables/tables.module.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/assets/data/autocomplete.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/assets/data/banners.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/assets/data/cards.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/assets/data/countries.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/assets/data/extended_table.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/assets/data/lists.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/assets/data/navigation.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/assets/data/ng2_charts.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/assets/data/ng2_nvd3_charts.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/assets/data/product-extra-details.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/assets/data/products.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/assets/data/regular_table.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/assets/data/smart_table.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/assets/data/user.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/environments/environment.prod.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/environments/environment.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/main.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../src/main.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/main/main.browser.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../src/main/main.browser.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/main/main.server.ts" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ComposerSettings">
+    <execution>
+      <executable />
+    </execution>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="ProjectId" id="1ZpmuDsmL79RhESP5VurGU4tTWt" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showExcludedFiles" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="c5fb0745-b77d-4ab5-aa22-2def4c8a80a7" name="Default Changelist" comment="" />
+      <created>1585544629346</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1585544629346</updated>
+      <workItem from="1585544630890" duration="232000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+</project>
