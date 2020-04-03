@@ -62,6 +62,6 @@ router.post('/getMessage', MessageController.getMessage);
 router.post('/setMessage', MessageController.setMessage);
 router.post('/setAllMessage', MessageController.setAllMessage);
 
-router.post('/generateSignature', PayfastController.generateSignature);
+router.post('/generateSignature', data.array(), PayfastController.generateSignature);
 
 module.exports = router;
