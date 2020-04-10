@@ -1,27 +1,5 @@
 
-exports.getGeometry = function(req, res) {
-    try {
-        var address = req.body.address;
-        if (address == undefined) res.status(400).send({error});
-        var NodeGeocoder = require('node-geocoder');
-        var options = {
-            provider: 'google',
-            apiKey: 'AIzaSyA6L4RK2RH8CmfPnyV1VEfjrHj3BP66gmE',
-            formatter: null
-        }
-        var geocoder = NodeGeocoder(options);
-        geocoder.geocode(address)
-            .then(function(geoData) {
-                res.status(200).send({lat: geoData[0].latitude, lng: geoData[0].longitude});
-            })
-            .catch(function(err) {
-                res.status(400).send({err})
-            })
-    } catch (error) {
-        res.status(400).send({error})
-    }
-}
-exports.business = function(req, res) {
+exports.getBusiness = function(req, res) {
     try {
         const userId = req.body.userId;
         if (userId == undefined) {

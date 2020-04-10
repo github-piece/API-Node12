@@ -4,9 +4,7 @@
 
     const app = express();
 
-    global.url = process.env.apiUrl
-
-    getData();
+    require('./data')()
 
     app.use(express.static('public')) 
 
@@ -22,20 +20,3 @@
     const route = require('./router/routes');
     app.use(route);
     app.listen(port);
-
-    async function getData() {
-      var result;
-      global.mysql = require('./connection');
-      result = await mysql.execute('SELECT * FROM tbl_country_basic_information');
-      global.countryData = result[0];
-      result = await mysql.execute('SELECT * FROM tbl_user');
-      global.userData = result[0];
-      result = await mysql.execute('SELECT * FROM tbl_unsdg_database');
-      global.unsdgData = result[0];
-      result = await mysql.execute('SELECT * FROM tbl_stakeholder_scoring');
-      global.scoringData = result[0];
-      result = await mysql.execute('SELECT * FROM tbl_business_commission');
-      global.commissionData = result[0];
-      result = await mysql.execute('SELECT * FROM tbl_instrument_types');
-      global.instrumentsData = result[0];
-  }
