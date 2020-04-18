@@ -84,7 +84,7 @@ exports.getScoutQuiz = async function(req, res) {
 }
 
 exports.setBusinessAnswer = async function(req, res) {
-    try {
+    // try {
         receiveData = req.body
         if (receiveData.action == 'insert') {
             md5 = require('md5')
@@ -146,9 +146,9 @@ exports.setBusinessAnswer = async function(req, res) {
         } else {
             res.status(200).send()
         }
-    } catch (error) {
-        res.status(400).send()
-    }
+    // } catch (error) {
+    //     res.status(400).send()
+    // }
 }
 
 exports.setScoutAnswer = async function(req, res) {
