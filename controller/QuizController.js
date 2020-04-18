@@ -20,7 +20,9 @@ exports.setExcelAnswer = async function(req, res) {
             mysql.execute(sql)
         }
         global.countDone = 0
+        global.setType = 'business'
         await setNewBusiness(businessId, userId)
+        res.status(200).send()
     } catch {
         res.status(400).send()
     }
@@ -34,7 +36,8 @@ exports.getBusinessQuiz = async function(req, res) {
             result  = await mysql.execute("SELECT id_business_quiz, business_id FROM tbl_business_answer WHERE u_id = ? AND profile = 'business_profile' ORDER BY time_started DESC LIMIT 1", [req.body.userId])
             rememberData = result[0][0]
         } else {
-            data = undefined
+            getProfileData = await mysql.execute("SELECT * FROM tbl_scout_profile WHERE userId = ?", [req.body.userId])
+            data = getProfileData[0]
             rememberData  = undefined
         }
         quizData = {
@@ -66,10 +69,10 @@ exports.getScoutQuiz = async function(req, res) {
         if (req.body.profile == 'scouter_profile') {
             quizData = tbl_scout_quiz
         } else {
-            result = await mysql.execute("SELECT * FROM tbl_scout_quiz WHERE profile = ?", [req.body.profile])
+            result = await mysql.execute("SELECT * FROM tbl_scout_quiz WHERE (profile = ? OR PROFILE = 'All') AND scout_question_type = 'determine_ability'", [req.body.profile])
             quizData = result[0]
         }
-        rememberData = await mysql.execute("SELECT id_business_quiz, business_id FROM tbl_business_answer WHERE u_id = ? AND profile = ? ORDER BY time_started DESC LIMIT 1", [req.body.userId, req.body.profile])
+        rememberData = await mysql.execute("SELECT id_business_quiz, business_id FROM tbl_business_answer WHERE u_id = ? AND (profile = ? OR profile = 'All') ORDER BY time_started DESC LIMIT 1", [req.body.userId, req.body.profile])
         quizData = {
             data: quizData,
             rememberValue: rememberData[0][0]
@@ -116,50 +119,262 @@ exports.setBusinessAnswer = async function(req, res) {
         }
         sql += ') VALUES (' + mark + '?, ?, ?, ?)'
         await mysql.execute(sql, insertData)
-        if (receiveData.id_business_quiz == 134) await setNewBusiness(businessId, receiveData.userid)
-        else res.status(200).send()
+        if (receiveData.profile == 'business_profile') {
+            lastId = 134
+        }
+        else {
+            if (receiveData.profile == 'scout_profile') {
+                lastIdData = await mysql.execute("SELECT id FROM tbl_scout_quiz ORDER BY ID DESC LIMIT 1")
+                lastId = lastIdData[0][0].id
+            } else {
+                lastIdData = await mysql.execute("SELECT id FROM tbl_scout_quiz WHERE profile = ? OR profile = 'All' ORDER BY ID DESC LIMIT 1", [receiveData.profile])
+                lastId = lastIdData[0][0].id
+            }
+        }
+        if (receiveData.id_business_quiz == lastId) {
+            if (receiveData.profile == 'business_profile') {
+                global.setType = 'business'
+                global.countDone = 0
+                await setNewBusiness(businessId, receiveData.userid)
+                profileData = true
+            }
+            else {
+                global.setType = 'business'
+                profileData = await setNewProfile(businessId, receiveData.userid, receiveData.profile)
+            }
+            res.status(200).send(profileData)
+        } else {
+            res.status(200).send()
+        }
     } catch (error) {
         res.status(400).send()
     }
 }
 
-async function getAnswersByBusinessId(userId, businessId) {
+exports.setScoutAnswer = async function(req, res) {
     try {
-        result = await mysql.execute("SELECT * FROM tbl_business_answer WHERE u_id = ? AND business_id = ?", [userId, businessId])
-        return result[0]
-    } catch {
-        return []
+        receiveData = req.body
+        if (receiveData.action == 'insert') {
+            md5 = require('md5')
+            scoutId = md5(receiveData.scoutId)
+        } else {
+            scoutId = receiveData.scoutId
+        }
+        insertData = [receiveData.userId, receiveData.profile, receiveData.businessId, receiveData.id, scoutId]
+        sql = 'INSERT INTO tbl_scout_answer (u_id, profile, business_id, id_business_quiz, scout_id'
+        mark = ''
+        if (receiveData.id == '2' && receiveData.profile == 'Business_Profile') {
+            sql += ', ' + 'col_0_header'
+            insertData[5] = req.files[0].filename
+            mark += '?, '
+        } else if (receiveData.id == '50' && receiveData.profile == 'Business_Profile') {
+            sql += ', col_0_header'; mark += '?, '
+            if (req.files[0] != undefined) {
+                sql += ', col_1_header'; mark += '?, '; insertData[5] = 'Yes'; insertData[6] = req.files[0].filename
+            } else {
+                insertData[5] = 'No'
+            }
+        } else {
+            for (i = 0; i < 10; i++) {
+                if (receiveData['col_' + i + '_header'] != undefined || receiveData['col_' + i + '_header'] != null) {
+                    insertData[i + 5] = receiveData['col_' + i + '_header']
+                    sql += ', ' + 'col_' + i + '_header'
+                    mark += '?, '
+                }
+            }
+        }
+        sql += ') VALUES (' + mark + '?, ?, ?, ?, ?)'
+        await mysql.execute(sql, insertData)
+        if (receiveData.finish == 'true') {
+            global.countDone = 0
+            global.setType = 'scout'
+            setNewScout(scoutId, receiveData.userId, receiveData.businessId)
+        }
+        res.status(200).send()
+    } catch (error) {
+        res.status(400).send()
     }
 }
 
-async function insertNewTab(keyInfo, businessInfo, type, userId, businessId) {
+exports.getCompareQuiz = async function(req, res) {
     try {
-        if (type == 'key') {
-            for (const [i, key] of Object.entries(keyInfo)) {
-                sql = "UPDATE tbl_business SET `" + key['description'].toLowerCase() + "` = ? WHERE u_id = ? AND business_id = ?"
-                insertData = [businessInfo[i], userId, businessId]
-                await mysql.execute(sql, insertData)
-            }
-            countDone++
-            if (countDone == 9) {
-                result = await mysql.execute('SELECT * FROM tbl_business');
-                global.tbl_business = result[0];
-                global.stakeholders = await getStakeholders(tbl_business)
-                global.extraData = await getData(tbl_business)
-                res.status(200).send()
-            }
-        } else {
-            for (const [key, data] of Object.entries(businessInfo)) {
-                sql = "UPDATE tbl_business SET `" + key + "` = ? WHERE u_id = ? AND business_id = ?"
-                insertData = [data, userId, businessId]
-                await mysql.execute(sql, insertData)
-            }
-            countDone++
+        quizCompareData = new Array()
+        sql = '';
+        for (profile of req.body.profile) {
+            sql += sql + "profile = "+ '\'' + profile + '\'' + " OR "
         }
+        result = await mysql.execute("SELECT * FROM tbl_scout_quiz WHERE (" + sql + " profile = 'All') AND scout_question_type = 'field_operation'")
+        for (data of result[0]) {
+            insertData = {}
+            count = 0
+            insertData['questionId'] = data.id
+            insertData['notes'] = data.notes
+            insertData['profile'] = data.profile
+            insertData['required'] = data.required
+            if (data.notes === 'Dom manipulation required') {
+                insertData['col_' + count + '_header'] = data['col_0_header']
+                insertData['col_' + count] = data['col_0']
+                count++
+                for (i = 1; i < 10; i++) {
+                    if (data['col_' + i + '_header'] != '') {
+                        insertData['col_' + count + '_header'] = data['col_' + i + '_header']
+                        insertData['col_' + count] = data['col_' + i]
+                        count++
+                    }
+                }
+            } else {
+                for (i = 0; i < 10; i++) {
+                    if (data['col_' + i + '_header'] != '') {
+                        insertData['col_' + count + '_header'] = data['col_' + i + '_header']
+                        insertData['col_' + count] = data['col_' + i]
+                        count++
+                    }
+                }
+            }
+            quizCompareData.push(insertData)
+        }
+        sql = ''
+        for (i = 0; i < 10; i++) {
+            if (i != 5) {
+                sql += "scout_col_" + i + "_header <>'0' OR "
+            }
+        }
+        sql = sql.substring(0, sql.length - 4)
+        result = await mysql.execute("SELECT * FROM tbl_business_quiz WHERE (" + sql + ") AND scout_question_type = 'field_operation'")
+        for (data of result[0]) {
+            insertData = {}
+            count = 0
+            insertData['questionId'] = data.id
+            insertData['notes'] = data.notes
+            insertData['profile'] = data.profile
+            insertData['required'] = data.required
+            insertData['domPosition'] = data.dom_position
+            if (data.notes === 'Dom manipulation required') {
+                insertData['col_' + count + '_header'] = data['col_0_header']
+                insertData['col_' + count] = data['col_0']
+                count++
+                for (i = 1; i < 10; i++) {
+                    if (data['col_' + i + '_header'] != '') {
+                        insertData['col_' + count + '_header'] = data['col_' + i + '_header']
+                        insertData['col_' + count] = data['col_' + i]
+                        count++
+                    }
+                }
+            } else {
+                for (i = 0; i < 10; i++) {
+                    if (data['scout_col_' + i + '_header']) {
+                        insertData['col_' + count + '_header'] = data['col_' + i + '_header']
+                        insertData['col_' + count] = data['col_' + i]
+                        count++;
+                    }
+                }
+            }
+            quizCompareData.push(insertData)
+        }
+        result = await mysql.execute("SELECT scout_id FROM tbl_scout_answer WHERE u_id = ? AND business_id = ? ORDER BY time_started DESC LIMIT 1", [req.body.userId, req.body.businessId])
+        if (result[0][0] == undefined) {
+            length = 0
+            scoutId = undefined
+        } else {
+            scoutId = result[0][0].scout_id
+            result  = await mysql.execute("SELECT scout_id FROM tbl_scout_answer WHERE u_id = ? AND business_id = ? AND scout_id = ?", [req.body.userId, req.body.businessId, scoutId])
+            length = result[0].length
+            if (length == 0) {
+                scoutId = undefined
+            } else {
+                scoutId = result[0][length - 1].scout_id
+            }
+        }
+        rememberData = {id: length, scoutId: scoutId}
+        quizData = {
+            data: quizCompareData,
+            stakeholderRings: tbl_stakeholder_scoring,
+            country: tbl_country_basic_information,
+            instruments: tbl_instrument_types,
+            currency_code: tbl_available_currency,
+            stakeholder: tbl_stakeholder_map,
+            goals: tbl_unsdg_database,
+            balances: tbl_balance_sheet,
+            incomes: tbl_income_sheet,
+            cashFlows: tbl_cash_flow_sheet,
+            sectors: tbl_sector_selection,
+            goalInteractions: tbl_unsdg_goal_interactions,
+            scoreBusiness: tbl_score_business,
+            Municipalities: tbl_local_dist_muni,
+            provinceList: provinceData[0],
+            rememberValue: rememberData
+        }
+        res.status(200).send(quizData)
     } catch {
         res.status(400).send()
     }
 }
+
+async function setNewProfile(profileId, userId, profile) {
+    answers = await getAnswersByBusinessId(userId, businessId)
+    country = await getAnswerByIdCol(42, 'col_1_header', answers)
+    organisation = await getAnswerByIdCol(42, 'col_0_header', answers)
+    province = await getAnswerByIdCol(42, 'col_2_header', answers)
+    await mysql.execute("INSERT INTO tbl_scout_profile (userId, profileId, type, organisation, country, province) VALUES (?, ?, ?, ?, ?, ?)", [userId, profileId, profile, organisation, country, province])
+    userProfile = await mysql.execute("SELECT * FROM tbl_scout_profile WHERE userId = ?", [userId])
+    return userProfile[0]
+}
+
+async function getAnswersByBusinessId(userId, businessId) {
+    try {
+        if (setType == 'business') {
+            result = await mysql.execute("SELECT * FROM tbl_business_answer WHERE u_id = ? AND business_id = ?", [userId, businessId])
+            return result[0]
+        } else {
+            result = await mysql.execute("SELECT * FROM tbl_scout_answer WHERE u_id = ? AND scout_id = ? AND profile = 'Business_Profile'", [userId, businessId])
+            return result[0]
+        }
+    } catch {
+        return []
+    }
+}
+async function insertNewTab(keyInfo, businessInfo, type, userId, businessId) {
+    try {
+        if (type == 'key') {
+            for (const [i, key] of Object.entries(keyInfo)) {
+                if (businessInfo[i] == undefined) {
+                    businessInfo[i] = ''
+                }
+                if (setType == 'business') {
+                    sql = "UPDATE tbl_business SET `" + key['description'].toLowerCase() + "` = ? WHERE u_id = ? AND business_id = ?"
+                    insertData = [businessInfo[i], userId, businessId]
+                    await mysql.execute(sql, insertData)
+                } else {
+                    if (key['description'].toLowerCase() != 'business name') {
+                        sql = "UPDATE tbl_scout SET `" + key['description'].toLowerCase() + "` = ? WHERE u_id = ? AND scout_id = ?"
+                        insertData = [businessInfo[i], userId, businessId]
+                        await mysql.execute(sql, insertData)
+                    }
+                }
+            }
+        } else {
+            for (const [key, data] of Object.entries(businessInfo)) {
+                if (data == undefined) data = ''
+                if (setType == 'business') {
+                    sql = "UPDATE tbl_business SET `" + key + "` = ? WHERE u_id = ? AND business_id = ?"
+                } else {
+                    sql = "UPDATE tbl_scout SET `" + key + "` = ? WHERE u_id = ? AND scout_id = ?"
+                }
+                insertData = [data, userId, businessId]
+                await mysql.execute(sql, insertData)
+            }
+        }
+        countDone++
+        if (countDone == 9 && setType == 'business') {
+            global.countDone = 0
+            result = await mysql.execute('SELECT * FROM tbl_business');
+            global.tbl_business = result[0];
+            global.stakeholders = await getStakeholders(tbl_business)
+            global.extraData = await getData(tbl_business)
+        }
+    } catch { }
+}
+
 
 async function setNewBusiness(businessId, userId) {
     try {
@@ -175,9 +390,23 @@ async function setNewBusiness(businessId, userId) {
         sustainabilityUnSdg(userId, businessId, answers)
         sustainabilityStakeholderCountry(userId, businessId, answers)
         notification(userId, businessId)
-    } catch {
-        res.status(400).send()
-    }
+    } catch { }
+}
+
+async function setNewScout(scoutId, userId, businessId) {
+    try {
+        mysql.execute("INSERT INTO tbl_scout (u_id, scout_id, business_id) VALUES (?, ?, ?)", [userId, scoutId, businessId])
+        answers = await getAnswersByBusinessId(userId, scoutId)
+        financialInformation(userId, scoutId, answers)
+        businessInformation(userId, scoutId, answers)
+        financialBalance(userId, scoutId)
+        financialIncome(userId, scoutId, answers)
+        financialCash(userId, scoutId)
+        scoringFinancial(answers, userId, scoutId)
+        badgeBusinessMunicipal(answers, userId, scoutId, 'badge')
+        sustainabilityUnSdg(userId, scoutId, answers)
+        sustainabilityStakeholderCountry(userId, scoutId, answers)
+    } catch { }
 }
 
 async function getAnswerByIdCol(id, col, answers) {
@@ -209,7 +438,7 @@ function getSum(answers, id, col, idCond, colCond, condition) {
         if (condition != '') {
             if (idCond != '') {
                 if (answer['id_business_quiz'] == idCond) {
-                    if (answer[colCond].trim() == condition) sum += value
+                    if (answer[colCond] == condition) sum += value
                 }
             } else {
                 if (answer[col] == condition) sum += value
@@ -235,14 +464,22 @@ function getCount(id, answers) {
     return count
 }
 
-async function getAnswerByQuery(keyInfo) {
+async function getAnswerByQuery(keyInfo, businessId) {
     answers = new Array()
     for await (key of keyInfo) {
         for await (catalogue of tbl_catalogue_summary) {
             if (catalogue['description'] == key.description) {
-                answer = await mysql.execute(catalogue['tbl_pull_request_1'])
-                if (answer[0][0] != undefined) answers.push(answer[0][0]['value'])
-                else answers.push('')
+                if (setType == 'business') {
+                    sql = catalogue['tbl_pull_request_1'] + " AND business_id = '" + businessId + "'"
+                    answer = await mysql.execute(sql)
+                    if (answer[0][0] != undefined) answers.push(answer[0][0]['value'])
+                    else answers.push('')
+                } else {
+                    sql = catalogue['tbl_pull_request_2'] + " AND scout_id = '" + businessId + "'"
+                    answer = await mysql.execute(sql)
+                    if (answer[0][0] != undefined) answers.push(answer[0][0]['value'])
+                    else answers.push('')
+                }
             }
         }
     }
@@ -315,9 +552,9 @@ async function getScoringAnswersById(answerById, question, indexColId) {
     scoringData = new Array()
     for (col of indexColId) {
         for await (answer of answerById) {
-            getData = await getScoreEachAnswer(answer['col_' + col + '_header'], question, col)
-            if (getData != []) {
-                scoringData.push(getData)
+            getDataValue = await getScoreEachAnswer(answer['col_' + col + '_header'], question, col)
+            if (getDataValue != []) {
+                scoringData.push(getDataValue)
             }
         }
     }
@@ -377,8 +614,7 @@ async function notification(userId, businessId) {
         for (table of tables[0]) {
             await mysql.execute("INSERT INTO tbl_notification (userId, businessId) VALUES (?, ?)", [table['u_id'], businessId])
         }
-    } catch {
-    }
+    } catch { }
 }
 
 async function badgeBusinessMunicipal(answers, userId, businessId, action) {
@@ -441,19 +677,30 @@ async function sustainabilityUnSdg(userId, businessId, answers) {
 
 async function financialCash(userId, businessId) {
     keyCash = await getKeyFromCatalogue(['Financial Summary', 'Cash Flow Statement', '', 'tbl_business_answer'])
-    insertNewTab(keyCash, await getAnswerByQuery(keyCash), 'key', userId, businessId)
+    if (setType == 'business') {
+        insertNewTab(keyCash, await getAnswerByQuery(keyCash, businessId), 'key', userId, businessId)
+    } else {
+        insertNewTab(keyCash, await getAnswerByQuery(keyCash, businessId), 'key', userId, businessId)
+    }
 }
 
 async function financialIncome(userId, businessId, answers) {
     businessInfo = []
     idAnswers = await getAnswerById(answers, 64)
     for (answer of idAnswers) {
-        if (businessInfo['income items'] != undefined) {
-            businessInfo['income items'] += ',' + answer['col_1_header']
-            businessInfo['income amounts'] += ',' + answer['col_2_header']
+        if (setType == 'business') {
+            answer1 = answer['col_1_header']
+            answer2 = answer['col_2_header']
         } else {
-            businessInfo['income items'] = answer['col_1_header']
-            businessInfo['income amounts'] = answer['col_2_header']
+            answer1 = answer['col_0_header']
+            answer2 = answer['col_1_header']
+        }
+        if (businessInfo['income items'] != undefined) {
+            businessInfo['income items'] += ',' + answer1
+            businessInfo['income amounts'] += ',' + answer2
+        } else {
+            businessInfo['income items'] = answer1
+            businessInfo['income amounts'] = answer2
         }
     }
     insertNewTab('', businessInfo, 'query', userId, businessId)
@@ -461,46 +708,90 @@ async function financialIncome(userId, businessId, answers) {
 
 async function financialBalance(userId, businessId) {
     balanceInfo = await getKeyFromCatalogue(['Financial Summary', 'Balance Sheet', '', 'tbl_business_answer'])
-    insertNewTab(balanceInfo, await getAnswerByQuery(balanceInfo), 'key', userId, businessId)
+    if (setType == 'business') {
+        insertNewTab(balanceInfo, await getAnswerByQuery(balanceInfo, businessId), 'key', userId, businessId)
+    } else {
+        insertNewTab(balanceInfo, await getAnswerByQuery(balanceInfo, businessId), 'key', userId, businessId)
+    }
 }
 
 async function financialInformation(userId, businessId, answers) {
     keyFinancial = await getKeyFromCatalogue(['Financial Summary', 'Financial Information', '', 'tbl_business_answer'])
+    sum30_1 = await getSum(answers, 30, 'col_1_header', '', '', '')
+    sum31_4 = await getSum(answers, 31, 'col_4_header', '', '', '')
+    sum32_1 = await getSum(answers, 32, 'col_1_header', '', '', '')
+    sum40_9 = await getSum(answers, 40, 'col_9_header', '', '', '')
+    sum56_0 = await getSum(answers, 56, 'col_0_header', '', '', '')
+    sum56_5 = await getSum(answers, 56, 'col_5_header', '', '', '')
+    sum56_7 = await getSum(answers, 56, 'col_7_header', '', '', '')
+    sum56_9 = await getSum(answers, 56, 'col_9_header', '', '', '')
+    sum57_1 = await getSum(answers, 57, 'col_1_header', '', '', '')
+    sum57_2 = await getSum(answers, 57, 'col_2_header', '', '', '')
+    sum57_3 = await getSum(answers, 57, 'col_3_header', '', '', '')
+    sum57_4 = await getSum(answers, 57, 'col_4_header', '', '', '')
+    sum57_6 = await getSum(answers, 57, 'col_6_header', '', '', '')
+    sum57_7 = await getSum(answers, 57, 'col_7_header', '', '', '')
+    sum57_8 = await getSum(answers, 57, 'col_8_header', '', '', '')
+    sum57_9 = await getSum(answers, 57, 'col_9_header', '', '', '')
+    sum61_2 = await getSum(answers, 61, 'col_2_header', '', '', '')
+    sum62_2 = await getSum(answers, 62, 'col_2_header', '', '', '')
+    if (setType == 'business') {
+        sum46_1 = await getSum(answers, 46, 'col_1_header', '', '', '')
+    } else {
+        sum46_1 = 0
+    }
     businessInfo = new Array()
-    businessInfo.push(await getSum(answers, 30, 'col_1_header', '', '', ''))
-    businessInfo.push(await getSum(answers, 31, 'col_4_header', '', '', '') / getCount(31, answers))
-    businessInfo.push((await getSum(answers, 57, 'col_1_header', '', '', '') + await getSum(answers, 57, 'col_1_header', '', '', '') + await getSum(answers, 57, 'col_3_header', '', '', '')) * 4)
-    businessInfo.push((await getSum(answers, 57, 'col_1_header', '', '', '') + await getSum(answers, 57, 'col_1_header', '', '', '') + await getSum(answers, 57, 'col_3_header', '', '', '')) * 4 / await getSum(answers, 61, 'col_2_header', '', '', ''))
-    businessInfo.push((await getSum(answers, 57, 'col_1_header', '', '', '') + await getSum(answers, 57, 'col_1_header', '', '', '') + await getSum(answers, 57, 'col_3_header', '', '', '')) * 4 / await getSum(answers, 61, 'col_2_header', 61, 'col_3_header', 'No'))
-    businessInfo.push(await getSum(answers, 57, 'col_8_header', '', '', '') / (await getSum(answers, 40, 'col_9_header', '', '', '') * 12))
-    businessInfo.push((await getSum(answers, 40, 'col_9_header', '', '', '') + await getSum(answers, 57, 'col_4_header', '', '', '') * 12 / await getSum(answers, 62, 'col_2_header', 61, 'col_3_header', 'Yes')))
-    businessInfo.push((await getSum(answers, 57, 'col_4_header', '', '', '') * 12 / (await getSum(answers, 62, 'col_2_header', 61, 'col_3_header', 'Yes'))))
-    businessInfo.push((await getSum(answers, 57, 'col_4_header', '', '', '') * 12 + await getSum(answers, 57, 'col_9_header', '', '', '') * (await getSum(answers, 57, 'col_1_header', '', '', '') + await getSum(answers, 57, 'col_2_header', '', '', '') + await getSum(answers, 57, 'col_3_header', '', '', '')) * 4) / await getSum(answers, 46, 'col_1_header', '', '', ''))
-    businessInfo.push(await getSum(answers, 62, 'col_2_header', '', '', '') / (await getSum(answers, 61, 'col_2_header', '', '', '') - await getSum(answers, 62, 'col_2_header', '', '', '')))
-    businessInfo.push(await getSum(answers, 62, 'col_2_header', '', '', '') / await getSum(answers, 61, 'col_2_header', '', '', ''))
-    businessInfo.push(await getSum(answers, 56, 'col_5_header', '', '', '') - await getSum(answers, 56, 'col_7_header', '', '', '') + await getSum(answers, 56, 'col_9_header', '', '', ''))
-    businessInfo.push(await getSum(answers, 32, 'col_1_header', '', '', '') * 12 / await getSum(answers, 56, 'col_0_header', '', '', ''))
-    businessInfo.push((await getSum(answers, 56, 'col_0_header', '', '', '') - (await getSum(answers, 57, 'col_6_header', '', '', '') + await getSum(answers, 57, 'col_7_header', '', '', '')) * 6) / await getSum(answers, 56, 'col_0_header', '', '', ''))
-    businessInfo.push((await getSum(answers, 57, 'col_6_header', '', '', '') + await getSum(answers, 57, 'col_7_header', '', '', '')) * 6)
-    businessInfo.push(await getSum(answers, 32, 'col_1_header', '', '', '') * 12 / await getSum(answers, 61, 'col_2_header', '', '', ''))
+    businessInfo.push(sum30_1)
+    businessInfo.push(sum31_4 / getCount(31, answers))
+    businessInfo.push((sum57_1 + sum57_1 + sum57_3) * 4)
+    businessInfo.push((sum57_1 + sum57_1 + sum57_3) * 4 / sum61_2)
+    businessInfo.push((sum57_1 + sum57_1 + sum57_3) * 4 / await getSum(answers, 61, 'col_2_header', 61, 'col_3_header', 'No'))
+    businessInfo.push(sum57_8 / (sum40_9 * 12))
+    businessInfo.push((sum40_9 + sum57_4 * 12 / await getSum(answers, 62, 'col_2_header', 61, 'col_3_header', 'Yes')))
+    businessInfo.push((sum57_4 * 12 / (await getSum(answers, 62, 'col_2_header', 61, 'col_3_header', 'Yes'))))
+    businessInfo.push((sum57_4 * 12 + sum57_9 * (sum57_1 + sum57_2 + sum57_3) * 4) / sum46_1)
+    businessInfo.push(sum62_2 / (sum61_2 - sum62_2))
+    businessInfo.push(sum62_2 / sum61_2)
+    businessInfo.push(sum56_5 - sum56_7 + sum56_9)
+    businessInfo.push(sum32_1 * 12 / sum56_0)
+    businessInfo.push((sum56_0 - (sum57_6 + sum57_7) * 6) / sum56_0)
+    businessInfo.push((sum57_6 + sum57_7) * 6)
+    businessInfo.push(sum32_1 * 12 / sum61_2)
     insertNewTab(keyFinancial, businessInfo, 'key', userId, businessId)
 }
 
 async function businessInformation(userId, businessId, answers) {
     keyBusiness = await getKeyFromCatalogue(['Business Summary', 'Business Information:', '', 'tbl_business_answer'])
     businessInfo = new Array()
-    businessInfo.push(await getAnswerByIdCol(1, 'col_0_header', answers))
-    businessInfo.push(await getAnswerByIdCol(7, 'col_5_header', answers))
-    businessInfo.push(await getAnswerByIdCol(2, 'col_0_header', answers))
-    businessInfo.push(await getAnswerByIdCol(6, 'col_0_header', answers))
-    businessInfo.push(await getAnswerByIdCol(14, 'col_1_header', answers))
-    businessInfo.push(await getAnswerByIdCol(12, 'col_0_header', answers))
-    businessInfo.push(await getAnswerByIdCol(44, 'col_1_header', answers))
-    businessInfo.push(await getAnswerByIdCol(38, 'col_0_header', answers))
-    businessInfo.push(await getAnswerByIdCol(5, 'col_0_header', answers))
+    sector = await getAnswerByIdCol(7, 'col_5_header', answers)
+    image = await getAnswerByIdCol(2, 'col_0_header', answers)
+    status = await getAnswerByIdCol(6, 'col_0_header', answers)
+    year = await getAnswerByIdCol(31, 'col_5_header', answers)
+    nature = await getAnswerByIdCol(8, 'col_0_header', answers)
+    if (setType == 'business') {
+        name = await getAnswerByIdCol(1, 'col_0_header', answers)
+        cost = await getAnswerByIdCol(14, 'col_1_header', answers)
+        tenure = await getAnswerByIdCol(44, 'col_1_header', answers)
+        businessType = await getAnswerByIdCol(1, 'col_1_header', answers)
+    } else {
+        name = setType
+        businessType = await getAnswerByIdCol(1, 'col_0_header', answers)
+        tenure = cost = ''
+    }
+    businessInfo.push(name)
+    businessInfo.push(sector)
+    businessInfo.push(image)
+    businessInfo.push(status)
+    businessInfo.push(cost)
+    businessInfo.push(year)
+    businessInfo.push(tenure)
+    businessInfo.push(nature)
+    businessInfo.push(businessType)
     address = await getAnswerByIdCol(55, 'col_0_header', answers)
+    if (setType == 'business') {
+        setLocation(userId, businessId, address)
+    }
     businessInfo.push(address)
-    setLocation(userId, businessId, address)
     insertNewTab(keyBusiness, businessInfo, 'key', userId, businessId)
 }
 
@@ -639,4 +930,10 @@ async function getAnswerByIdForGlobal(answer, id_business_quiz) {
         }
     }
     return answersById;
+}
+
+function sleep(ms) {
+    return new Promise((resolve) => {
+      setTimeout(resolve, ms);
+    });
 }

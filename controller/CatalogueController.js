@@ -14,8 +14,8 @@ exports.getCategory = async function(req, res) {
             commission: tbl_business_commission,
             instruments: tbl_instrument_types
         };
-        res.status(200).send(businessList);
-    } catch (error) {
+        res.status(200).send(businessList)
+    } catch {
         res.status(400).send()
     }
 }
@@ -30,6 +30,15 @@ exports.getTabData = async function(req, res) {
         businessList = {unSdg: extraData.unSdg}
     }
     res.status(200).send(businessList)
+}
+
+exports.getCompareData = async function(req, res) {
+    try {
+        compareData = await mysql.execute("SELECT * FROM tbl_scout WHERE business_id = ? ORDER BY created_at DESC LIMIT 1", [req.body.businessId])
+        res.status(200).send(compareData[0][0])
+    } catch {
+        res.status(400).send()
+    }
 }
 
 async function getData(businessListData) {

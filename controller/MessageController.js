@@ -28,7 +28,7 @@ exports.setAllMessage = async function(req, res) {
         if (req.body.userId == undefined) {
             res.status(400).send()
         }
-        await mysql.execute("UPDATE tbl_notification SET status = 1 WHERE userId NOT LIKE ?", [req.body.userId])
+        await mysql.execute("UPDATE tbl_notification SET status = 1 WHERE userId = ?", [req.body.userId])
         messageData = await getData(req.body.userId)
         res.status(200).send(messageData)
     } catch (error) {
@@ -42,7 +42,7 @@ async function getData(userId) {
         "FROM tbl_notification " +
         "INNER JOIN tbl_user ON tbl_notification.userId = tbl_user.u_id " +
         "INNER JOIN tbl_business ON tbl_notification.businessId = tbl_business.business_id " +
-        "WHERE tbl_notification.userId NOT LIKE ? AND tbl_notification.status = 0", [userId]
+        "WHERE tbl_notification.userId = ? AND tbl_notification.status = 0", [userId]
         )
     messages = result[0]
     messageData = new Array()

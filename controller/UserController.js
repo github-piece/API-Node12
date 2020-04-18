@@ -92,6 +92,16 @@ exports.getUserList = async function(req, res) {
     }
 }
 
+exports.getScoutProfile = async function(req, res) {
+    try {
+        scoutData = await mysql.execute("SELECT * FROM tbl_scout_profile WHERE userId = ?", [req.body.userId])
+        businessData = await mysql.execute("SELECT `business_id`, `business name`, `date completed`, `address`, `country` FROM tbl_business WHERE u_id <>?", [req.body.userId])
+        res.status(200).send({scoutData: scoutData[0], businessData: businessData[0]})
+    } catch {
+        res.status(400).send()
+    }
+}
+
 exports.uploadPhoto = async function(req, res) {
     try {
         await mysql.execute("UPDATE tbl_user SET u_avatar = ? WHERE u_id = ?", [req.file.filename, req.body.userId])
