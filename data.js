@@ -37,6 +37,8 @@ module.exports = async function() {
     global.tbl_score_business = result[0];
     result = await mysql.execute('SELECT * FROM tbl_local_dist_muni');
     global.tbl_local_dist_muni = result[0];
+    result = await mysql.execute('SELECT * FROM tbl_country_drugusage');
+    global.tbl_country_drugusage = result[0];
     result = await mysql.execute('SELECT * FROM tbl_country_economy');
     global.tbl_country_economy = result[0];
     result = await mysql.execute('SELECT * FROM tbl_country_energy');
@@ -51,6 +53,8 @@ module.exports = async function() {
     global.tbl_country_refugees = result[0];
     result = await mysql.execute('SELECT * FROM tbl_country_maritime');
     global.tbl_country_maritime = result[0];
+    result = await mysql.execute('SELECT * FROM tbl_country_government');
+    global.tbl_country_government = result[0];
     result = await mysql.execute('SELECT * FROM tbl_country_health');
     global.tbl_country_health = result[0];
     result = await mysql.execute('SELECT * FROM tbl_country_climates');
@@ -74,6 +78,7 @@ module.exports = async function() {
     global.provinceData = await mysql.execute("SELECT country, `names` FROM tbl_country_provinces  GROUP By `names` ORDER BY country ASC")
 
     global.stakeholders = await getStakeholders(tbl_business)
+    console.log(stakeholders)
     global.extraData = await getData(tbl_business)
     console.log('OK!')
 }
@@ -114,16 +119,15 @@ async function getResult(goal_number) {
 
 async function getStakeholders(businessListData) {
     var stakeholders = new Array();
-    stakeholders.push({country: await getStakeholderItem('Country', businessListData)})
-    stakeholders.push({button3: await getStakeholderItem('Button 3', businessListData)})
-    stakeholders.push({button4: await getStakeholderItem('Button 4', businessListData)})
-    stakeholders.push({consideration: await getStakeholderItem('Considerations', businessListData)})
-    stakeholders.push({maps: await getStakeholderMap(25, businessListData)})
+    stakeholders.push(await getStakeholderItem('Country', businessListData))
+    stakeholders.push(await getStakeholderItem('Button 3', businessListData))
+    stakeholders.push(await getStakeholderItem('Button 4', businessListData))
+    stakeholders.push(await getStakeholderItem('Considerations', businessListData))
+    stakeholders.push(await getStakeholderMap(25, businessListData))
     return stakeholders;
 }
 
 async function getStakeholderItem(key, businessListData) {
-    var stakeholder = new Array();
     var stakeholders = new Array();
     var result = await mysql.execute("SELECT `description` FROM tbl_catalogue_summary WHERE tab = 'Sustainability Measures' AND sub_tab = 'Stakeholders' AND button_in_sub_tab = ?", [key])
     var key_info = result[0];
@@ -137,28 +141,27 @@ async function getStakeholderItem(key, businessListData) {
                 var countryName = mainBusiness_item['country']
                 var col = key_info_item['description']
                 var table = tables[index++]['tbl_pull_request_1_source']
-                if (table != lastTable) {
+                if (table != lastTable && table != 'tbl_business_answer') {
                     result = eval(table)
-                    for await (content_item of content) {
+                    for await (content_item of result) {
                         if(content_item['country'] == countryName && content_item[col] != undefined) {
                             var result_col = {}
                             result_col[col] = content_item[col];
-                            stakeholder.push(result_col);
                         }
                     }
                 }
                 lastTable = table;
             }
-            stakeholders.push(stakeholder)
-        }
+            stakeholders.push(result_col)
+        }  
     } catch { }
     return stakeholders
 }
 
 async function getStakeholderMap(id_business_quiz, businessListData) {
-    var stakeholders_map = new Array()
     var stakeholders_maps = new Array()
         for await (business_item of businessListData) {
+            stakeholders_map = new Array()
             var answer = await getAnswersByBusinessId(business_item['u_id'], business_item['business_id']);
             var answersById = await getAnswerById(answer, id_business_quiz)
             if (answersById[0] != undefined) {

@@ -8,9 +8,6 @@ exports.getCategory = async function(req, res) {
             businessUser: tbl_user,
             goalList: tbl_unsdg_database,
             business_length: tbl_business.length,
-            unSdg: extraData.unSdg,
-            interactions: extraData.interactions,
-            stakeholders: stakeholders,
             commission: tbl_business_commission,
             instruments: tbl_instrument_types
         };
@@ -24,11 +21,7 @@ exports.getTabData = async function(req, res) {
     if (req.body.userId == undefined) { res.status(400).send() }
     business = JSON.parse(req.body.business)
     extraData = await getData(business)
-    if (req.body.tab == 'Sustainability') {
-        businessList = {unSdg: extraData.unSdg, interactions: extraData.interactions, stakeholders: await getStakeholders(business)}
-    } else {
-        businessList = {unSdg: extraData.unSdg}
-    }
+    businessList = {unSdg: extraData.unSdg, interactions: extraData.interactions, stakeholders: await getStakeholders(business)}
     res.status(200).send(businessList)
 }
 
@@ -77,16 +70,18 @@ async function getResult(goal_number) {
 
 async function getStakeholders(businessListData) {
     var stakeholders = new Array();
-    stakeholders.push({country: await getStakeholderItem('Country', businessListData)})
-    stakeholders.push({button3: await getStakeholderItem('Button 3', businessListData)})
-    stakeholders.push({button4: await getStakeholderItem('Button 4', businessListData)})
-    stakeholders.push({consideration: await getStakeholderItem('Considerations', businessListData)})
-    stakeholders.push({maps: await getStakeholderMap(25, businessListData)})
+    stakeholders.push(await getStakeholderItem('Country', businessListData))
+    stakeholders.push(await getStakeholderItem('Button 3', businessListData))
+    stakeholders.push(await getStakeholderItem('Button 4', businessListData))
+    stakeholders.push(await getStakeholderItem('Considerations', businessListData))
+    stakeholders.push(await getDataSelectedArea('province', businessListData))
+    stakeholders.push(await getDataSelectedArea('district', businessListData))
+    stakeholders.push(await getDataSelectedArea('municipality', businessListData))
+    stakeholders.push(await getStakeholderMap(25, businessListData))
     return stakeholders;
 }
 
 async function getStakeholderItem(key, businessListData) {
-    var stakeholder = new Array();
     var stakeholders = new Array();
     var result = await mysql.execute("SELECT `description` FROM tbl_catalogue_summary WHERE tab = 'Sustainability Measures' AND sub_tab = 'Stakeholders' AND button_in_sub_tab = ?", [key])
     var key_info = result[0];
@@ -96,81 +91,72 @@ async function getStakeholderItem(key, businessListData) {
     try {
         for await (mainBusiness_item of businessListData) {
             index = 0
+            result_col = {}
             for await (key_info_item of key_info) {
                 var countryName = mainBusiness_item['country']
                 var col = key_info_item['description']
                 var table = tables[index++]['tbl_pull_request_1_source']
-                if (table != lastTable) {
+                if (table != lastTable && table != 'tbl_business_answer') {
                     result = eval(table)
-                    for await (content_item of content) {
+                    for await (content_item of result) {
                         if(content_item['country'] == countryName && content_item[col] != undefined) {
-                            var result_col = {}
                             result_col[col] = content_item[col];
-                            stakeholder.push(result_col);
                         }
                     }
                 }
                 lastTable = table;
             }
-            stakeholders.push(stakeholder)
-        }
+            stakeholders.push(result_col)
+        }  
     } catch { }
     return stakeholders
 }
 
 async function getStakeholderMap(id_business_quiz, businessListData) {
-    var stakeholders_map = new Array()
     var stakeholders_maps = new Array()
         for await (business_item of businessListData) {
-            var answer = await getAnswersByBusinessId(business_item['u_id'], business_item['business_id']);
-            var answersById = await getAnswerById(answer, id_business_quiz)
-            if (answersById[0] != undefined) {
-                if (answersById[0]['col_0_header'] != null) {
+            var stakeholders_map = {}
+            result = await mysql.execute("SELECT col_0_header, col_1_header FROM tbl_business_answer WHERE u_id = ? AND business_id = ? AND id_business_quiz = ? AND profile = 'business_profile'", [business_item['u_id'], business_item['business_id'], id_business_quiz])
+            answersById = result[0]
+            if (answersById[0] != []) {
+                if (answersById[0]['col_0_header'] != null && answersById[0]['col_1_header'] != null) {
                     var stakeholders = answersById[0]['col_0_header'].split(',')
-                } else {
-                    var stakeholders = null
-                }
-                if (answersById[0]['col_1_header'] != null) {
                     var rings = answersById[0]['col_1_header'].split(',')
-                } else {
-                    var rings = null
-                }
-                if (tbl_stakeholder_scoring != null) {
                     for (stakeholderRing of tbl_stakeholder_scoring) {
-                        var stakeholder_map = new Array()
-                        if (rings != null) {
-                            for (var i = 0; i < rings.length; i++) {
-                                if(stakeholderRing['ring'] == rings[i]) {
-                                    stakeholder_map.push(stakeholders[i])
-                                }
+                        items = new Array()
+                        flag = false
+                        for (i = 0; i < stakeholders.length; i++) {
+                            if (rings[i] == stakeholderRing.ring) {
+                                items.push(rings[i])
+                                flag = true
+                            }
+                            if (flag) {
+                                stakeholders_map[stakeholderRing.ring] = items
+                                flag = false
                             }
                         }
-                        stakeholders_map[stakeholderRing['ring']] = stakeholder_map
-                        stakeholders_maps[stakeholderRing['ring']] = stakeholder_map
                     }
-                }
+                } 
             }
+            stakeholders_maps.push(stakeholders_map)
         }
     return stakeholders_maps
 }
 
-async function getAnswersByBusinessId(userId, businessId) {
-    var result = await mysql.execute('SELECT * FROM tbl_business_answer WHERE u_id= ? AND business_id = ?', [userId, businessId]);
-    return result[0];
-}
-
-async function getAnswerById(answer, id_business_quiz) {
-    var answersById = new Array();
-    for (value of answer) {
-        if(value['id_business_quiz'] == id_business_quiz) {
-            answersById.push(value)
-        }
+async function getDataSelectedArea(key, businessListData) {
+    returnData = new Array()
+    for await (business of businessListData) {
+        location = business[key]
+        municipalLink = business['municipality_link']
+        temp = await getDataEachArea(key, location, municipalLink)
+        returnData.push(temp)
     }
-    return answersById;
+    return returnData
 }
 
-function sleep(ms) {
-    return new Promise((resolve) => {
-      setTimeout(resolve, ms);
-    });
+async function getDataEachArea(location, municipalLink) {
+    sql = 'SELECT * FROM xls_data_south_africa WHERE location = ? OR question1 = ? OR question2 = ? OR question3 = ? OR question4 = ? LIMIT 30'
+    insertData = [location, municipalLink, municipalLink, municipalLink]
+    result = await mysql.execute(sql, insertData)
+    return result[0]
 }
