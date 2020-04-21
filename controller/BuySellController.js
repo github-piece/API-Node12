@@ -70,3 +70,27 @@ exports.setBuyHistory = async function(req, res) {
         res.status(400).send()
     }
 }
+
+exports.getBuyHistory = async function(req, res) {
+    try {
+        result = await mysql.execute("SELECT tbl_history.*, tbl_user.u_name, tbl_user.u_email FROM tbl_history LEFT JOIN tbl_user ON tbl_history.u_id = tbl_user.u_id WHERE tbl_history.u_id = ?", [req.body.userId])
+        historyBuyList = new Array()
+        for await (data of result[0]) {
+            rowValue = {}
+            rowValue['u_id'] = data['u_id']
+            rowValue['u_email'] = data['u_email']
+            rowValue['business_id'] = data['business_id']
+            rowValue['amount'] = data['amount']
+            rowValue['fundtype'] = data['fundtype']
+            rowValue['rate'] = data['rate']
+            rowValue['frequency'] = data['frequency']
+            rowValue['type'] = data['type']
+            rowValue['userName'] = data['u_name']
+            rowValue['date_created'] = data['date_created']
+            historyBuyList.push(rowValue)
+        }
+        res.status(200).send(historyBuyList)
+    } catch {
+        res.status(400).send()
+    }
+}
