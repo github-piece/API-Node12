@@ -3,11 +3,11 @@ exports.getBusiness = function(req, res) {
     try {
         const userId = req.body.userId;
         if (userId == undefined) {
-            res.status(400).send({error});
+            res.status(400).send();
         }
         mysql.query("SELECT tbl_business.*, tbl_user.u_email, tbl_user.u_avatar, tbl_user.u_name FROM tbl_business LEFT JOIN tbl_user ON tbl_business.u_id = tbl_user.u_id", function (err, rows, fields) {
             if (err) throw err;
-            const returnValue  = new Array();
+            const businessData  = new Array();
             for (var i = 0; i < rows.length; i++) {
                 var rowValue = {};
                 rowValue.id = rows[i].id;
@@ -27,9 +27,9 @@ exports.getBusiness = function(req, res) {
                 rowValue.amount = rows[i]['how much they\'re raising'];
                 rowValue.lat = rows[i]['lat'];
                 rowValue.lng = rows[i]['lng'];
-                returnValue.push(rowValue);
+                businessData.push(rowValue);
             }
-            res.status(200).send(returnValue);
+            res.status(200).send(businessData);
         });
     } catch (error) {
         res.status(400).send({error})

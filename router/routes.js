@@ -82,9 +82,8 @@ router.post('/getArticleList', data.array(), ArticleController.getArticleList);
 router.post('/setArticle', article.array('file'), ArticleController.setArticle);
 router.post('/updateArticle', article.array('file'), ArticleController.updateArticle);
 
-router.post('/getBuyHistory', BuySellController.getBuyHistory);
+router.post('/getBusinessList', BuySellController.getBusinessList);
 router.post('/setBuyHistory', data.array(), BuySellController.setBuyHistory);
-router.post('/getSellHistory', BuySellController.getSellHistory);
 
 router.post('/getMessage', MessageController.getMessage);
 router.post('/setMessage', MessageController.setMessage);
